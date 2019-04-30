@@ -2,7 +2,14 @@ package com.xue.song.ffmpeg;
 
 public class FPlayer {
     static {
-
+      System.loadLibrary("avutil");
+      System.loadLibrary("swresample");
+      System.loadLibrary("avcodec");
+      System.loadLibrary("avformat");
+      System.loadLibrary("swscale");
+      System.loadLibrary("postproc");
+      System.loadLibrary("avfilter");
+      System.loadLibrary("avdevice");
     }
     /**
      * 输入
@@ -10,5 +17,5 @@ public class FPlayer {
      * @param input
      * @param ouput
      */
-    public native void doOutput(String input,String ouput);
+    public static native void doOutput(String input,String ouput);
 }

@@ -41,7 +41,7 @@
 
 #include "attributes.h"
 #include "version.h"
-#include "libavutil/avconfig.h"
+#include "ffmpeg/libavutil/avconfig.h"
 
 #if AV_HAVE_BIGENDIAN
 #   define AV_NE(be, le) (be)

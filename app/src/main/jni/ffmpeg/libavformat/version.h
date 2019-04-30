@@ -27,7 +27,7 @@
  * Libavformat version macros
  */
 
-#include "libavutil/version.h"
+#include "ffmpeg/libavutil/version.h"
 
 #define LIBAVFORMAT_VERSION_MAJOR 56
 #define LIBAVFORMAT_VERSION_MINOR  25
