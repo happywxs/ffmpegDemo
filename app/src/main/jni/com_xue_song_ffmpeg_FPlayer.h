@@ -14,7 +14,6 @@ extern "C" {
  */
 JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
   (JNIEnv *, jobject, jstring, jstring);
-
 #ifdef __cplusplus
 }
 #endif

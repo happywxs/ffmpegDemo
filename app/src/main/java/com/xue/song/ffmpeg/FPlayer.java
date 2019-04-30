@@ -1,6 +1,9 @@
 package com.xue.song.ffmpeg;
 
 public class FPlayer {
+    static {
+
+    }
     /**
      * 输入
      * 输出
