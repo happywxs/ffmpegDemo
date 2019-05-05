@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void accept(Boolean aBoolean) throws Exception {
                         if(aBoolean){
-                            String root=  Environment.getExternalStorageDirectory().getAbsolutePath()+"/Pictures";
+                            String root=  Environment.getExternalStorageDirectory().getAbsolutePath();
                             String input=root+"/vedio.mp4";
                             String out=root+"/vedio.yuv";
                             FPlayer.doOutput(input,out);

@@ -33,7 +33,7 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
     int i = 0;
     // 拿到视频的脚标
     for (; i < avFormatContext->nb_streams; i++) {
-        if (avFormatContext->streams[i]->codec->codec_type== AVMEDIA_TYPE_VIDEO) {
+        if (avFormatContext->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
             v_stream_idx = i;
             break;
         }
@@ -55,7 +55,7 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
         return;
     }
     LOGI("file format: %s", avFormatContext->iformat->name);
-    LOGI("vedio long:%ld", (avFormatContext->duration) / 1000000);
+    LOGI("vedio long:%lld", (avFormatContext->duration) / 1000000);
     LOGI("with :%d height:%d", avCodecContext->width, avCodecContext->height);
     LOGI("decoder name :%s", avCodec->name);
     //准备读取帧数据
@@ -68,7 +68,7 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
     u_int8_t *out_buffer = av_malloc(
             avpicture_get_size(AV_PIX_FMT_YUV420P, avCodecContext->width, avCodecContext->height));
     //初始化 缓冲区
-    avpicture_fill((AVPicture *) avFrame, out_buffer, AV_PIX_FMT_YUV420P, avCodecContext->width,
+    avpicture_fill((AVPicture *) avFrameYuv, out_buffer, AV_PIX_FMT_YUV420P, avCodecContext->width,
                    avCodecContext->height);
     //获取转码 上下文
     struct SwsContext *swsContext = sws_getContext(avCodecContext->width, avCodecContext->height,
@@ -81,23 +81,28 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
     FILE *file = fopen(output_c, "wb+");
     int frameNum = 0;
     //一帧一帧读取压缩数据
-    while (av_read_frame(avFormatContext, avPacket)) {
-
-        ret = avcodec_decode_video2(avCodecContext, avFrame, &got_picture, avPacket);
-        if (ret == -1) {
-            LOGE("%s", "decoder error");
-        }
-        if (got_picture) {
-            sws_scale(swsContext, avFrame->data, avFrame->linesize, 0, avCodecContext->height,
-                      avFrameYuv->data, avFrameYuv->linesize);
-            int size = avCodecContext->width * avCodecContext->height;
-            fwrite(avFrameYuv->data[0], 1, size, file);
-            fwrite(avFrameYuv->data[1], 1, size / 4, file);
-            fread(avFrameYuv->data[2], 1, size / 4, file);
-            LOGI("帧数%d", frameNum);
+    while (av_read_frame(avFormatContext, avPacket) == 0) {
+        if (avPacket->stream_index == v_stream_idx) {
+            ret = avcodec_decode_video2(avCodecContext, avFrame, &got_picture, avPacket);
+            if (ret < 0) {
+                LOGE("%s", "decoder error"+ret);
+                return;
+            }
+            if (got_picture) {
+                sws_scale(swsContext, avFrame->data, avFrame->linesize, 0, avCodecContext->height,
+                          avFrameYuv->data, avFrameYuv->linesize);
+                int size = avCodecContext->width * avCodecContext->height;
+                fwrite(avFrameYuv->data[0], 1, size, file);
+                fwrite(avFrameYuv->data[1], 1, size / 4, file);
+                fwrite(avFrameYuv->data[2], 1, size / 4, file);
+                LOGI("帧数%d", ++frameNum);
+            }
         }
         av_free_packet(avPacket);
     }
+    fclose(file);
+    (*env)->ReleaseStringUTFChars(env,jstr_input,input_c);
+    (*env)->ReleaseStringUTFChars(env,jstr_oupt,output_c);
     av_frame_free(&avFrame);
     avcodec_close(avCodecContext);
     avformat_free_context(avFormatContext);

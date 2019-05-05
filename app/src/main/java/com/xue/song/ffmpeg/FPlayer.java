@@ -10,6 +10,7 @@ public class FPlayer {
       System.loadLibrary("postproc");
       System.loadLibrary("avfilter");
       System.loadLibrary("avdevice");
+      System.loadLibrary("myffpeg");
     }
     /**
      * 输入
