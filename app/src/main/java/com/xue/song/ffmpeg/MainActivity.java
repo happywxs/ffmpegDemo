@@ -1,11 +1,15 @@
 package com.xue.song.ffmpeg;
 
 import android.Manifest;
+import android.content.Context;
+import android.graphics.Color;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
@@ -17,19 +21,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-         Button btnDecode= findViewById(R.id.btn_deoode);
+        Button btnDecode = findViewById(R.id.btn_deoode);
+        final FrameLayout fl_content= findViewById(R.id.fl_content);
+        LayoutInflater inflater= (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        final FrameLayout vedioView= (FrameLayout) inflater.inflate(R.layout.viedio,null);
+     //   final VedioView vedioView=new VedioView(MainActivity.this);
+     //   vedioView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT));
+   //     vedioView.setBackgroundColor(Color.YELLOW);
         btnDecode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                RxPermissions rxPermissions=new RxPermissions(MainActivity.this);
-                rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE).subscribe(new Consumer<Boolean>() {
+                RxPermissions rxPermissions = new RxPermissions(MainActivity.this);
+                rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE).subscribe(new Consumer<Boolean>() {
                     @Override
                     public void accept(Boolean aBoolean) throws Exception {
-                        if(aBoolean){
-                            String root=  Environment.getExternalStorageDirectory().getAbsolutePath();
-                            String input=root+"/vedio.mp4";
-                            String out=root+"/vedio.yuv";
-                            FPlayer.doOutput(input,out);
+                        if (aBoolean) {
+                            fl_content.removeAllViews();
+                            fl_content.addView(vedioView);
                         }
                     }
                 });

@@ -66,6 +66,7 @@ LOCAL_SRC_FILES :=com_xue_song_ffmpeg_FPlayer.c
 LOCAL_SHARED_LIBRARIES := avutil swresample avcodec avformat swscale postproc avfilter avdevice
 # 指定这个模块里会用到哪些原生 API，详见：https://developer.android.google.cn/ndk/guides/stable_apis.html
 LOCAL_LDLIBS := -llog
+LOCAL_LDLIBS += -landroid -lz -lm
 LOCAL_CPP_FEATURES := exceptions
 # 帮助系统将所有内容连接到一起，固定的，不需要去动
 include $(BUILD_SHARED_LIBRARY)

@@ -1,5 +1,7 @@
 package com.xue.song.ffmpeg;
 
+import android.view.Surface;
+
 public class FPlayer {
     static {
       System.loadLibrary("avutil");
@@ -18,5 +20,16 @@ public class FPlayer {
      * @param input
      * @param ouput
      */
-    public static native void doOutput(String input,String ouput);
+    public static native void doOutput(String input,Surface surface);
+
+    /**
+     * @param surface
+     */
+    public static native void createSurface(Surface surface);
+
+    public static native void resumePlayer();
+
+    public static native void pausePlayer();
+
+    public static native void stopPlayer();
 }

@@ -13,7 +13,16 @@ extern "C" {
  * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
-        (JNIEnv *, jclass, jstring, jstring);
+        (JNIEnv *, jclass, jstring, jobject);
+
+JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_createSurface
+        (JNIEnv *, jclass, jobject);
+JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_resumePlayer
+        (JNIEnv *, jclass);
+JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_pausePlayer
+        (JNIEnv *, jclass);
+JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_stopPlayer
+        (JNIEnv *, jclass);
 #ifdef __cplusplus
 }
 #endif

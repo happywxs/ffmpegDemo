@@ -6,15 +6,18 @@
 #include "ffmpeg/libavformat/avformat.h"
 #include "ffmpeg/libswscale/swscale.h"
 #include "ffmpeg/libavcodec/avcodec.h"
+#include <android/native_window.h>
+#include <android/native_window_jni.h>
+#include <unistd.h>
 /* Header for class com_xue_song_ffmpeg_FPlayer */
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,"wang",__VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,"wang",__VA_ARGS__)
-
+//ANativeWindow *nativeWindow;
 JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
-        (JNIEnv *env, jclass jcl, jstring jstr_input, jstring jstr_oupt) {
+        (JNIEnv *env, jclass jcl, jstring jstr_input, jobject surfView) {
     const char *input_c = (*env)->GetStringUTFChars(env, jstr_input, NULL);
-    const char *output_c = (*env)->GetStringUTFChars(env, jstr_oupt, NULL);
-    LOGI("input %s  output %s", input_c, output_c);
+   // const char *output_c = (*env)->GetStringUTFChars(env, jstr_oupt, NULL);
+    LOGI("input %s ", input_c);
     //注册所有组件
     av_register_all();
     //封装格式上下文，统领全局的结构体，保存视频文件的封装格式的相关信息
@@ -64,23 +67,27 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
     //用于存储 解码后的数据
     AVFrame *avFrame = av_frame_alloc();
     //用于存储转码后的yuv 数据
-    AVFrame *avFrameYuv = av_frame_alloc();
+    AVFrame *avFrameRGB = av_frame_alloc();
     u_int8_t *out_buffer = av_malloc(
-            avpicture_get_size(AV_PIX_FMT_YUV420P, avCodecContext->width, avCodecContext->height));
-    //初始化 缓冲区
-    avpicture_fill((AVPicture *) avFrameYuv, out_buffer, AV_PIX_FMT_YUV420P, avCodecContext->width,
+            avpicture_get_size(AV_PIX_FMT_RGBA, avCodecContext->width, avCodecContext->height));
+    avpicture_fill((AVPicture *) avFrameRGB,out_buffer , AV_PIX_FMT_RGBA, avCodecContext->width,
                    avCodecContext->height);
+
     //获取转码 上下文
     struct SwsContext *swsContext = sws_getContext(avCodecContext->width, avCodecContext->height,
                                                    avCodecContext->pix_fmt,
                                                    avCodecContext->width, avCodecContext->height,
-                                                   AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL,
+                                                   AV_PIX_FMT_RGBA, SWS_BICUBIC, NULL, NULL,
                                                    NULL);
+    ANativeWindow* aNativeWindow= ANativeWindow_fromSurface(env,surfView);
+ //   setBufferNativeWindow(avCodecContext->width,avCodecContext->height);
+    ANativeWindow_setBuffersGeometry(aNativeWindow,avCodecContext->width,avCodecContext->height,WINDOW_FORMAT_RGBA_8888);
     int got_picture, ret;
 
-    FILE *file = fopen(output_c, "wb+");
+  //  FILE *file = fopen(output_c, "wb+");
     int frameNum = 0;
     //一帧一帧读取压缩数据
+    ANativeWindow_Buffer nativeWindow_buffer;
     while (av_read_frame(avFormatContext, avPacket) == 0) {
         if (avPacket->stream_index == v_stream_idx) {
             ret = avcodec_decode_video2(avCodecContext, avFrame, &got_picture, avPacket);
@@ -89,22 +96,80 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
                 return;
             }
             if (got_picture) {
-                sws_scale(swsContext, avFrame->data, avFrame->linesize, 0, avCodecContext->height,
-                          avFrameYuv->data, avFrameYuv->linesize);
-                int size = avCodecContext->width * avCodecContext->height;
-                fwrite(avFrameYuv->data[0], 1, size, file);
+
+            //   ANativeWindow_acquire(aNativeWindow);
+               ANativeWindow_lock(aNativeWindow,&nativeWindow_buffer,NULL);
+
+               sws_scale(swsContext, avFrame->data, avFrame->linesize, 0, avCodecContext->height,
+                          avFrameRGB->data, avFrameRGB->linesize);
+
+               uint8_t *des=nativeWindow_buffer.bits;
+               uint8_t *src=avFrameRGB->data[0];
+           //    LOGI("原数据%c",src);
+               int srcStride=avFrameRGB->linesize[0];
+               int desStride=nativeWindow_buffer.stride*4;
+               int i=0;
+
+               for(;i<avCodecContext->height;i++){
+                   LOGI("输出 %c",avFrame->data);
+                 memcpy(des+i*desStride,src+i*srcStride,srcStride);
+               }
+               ANativeWindow_unlockAndPost(aNativeWindow);
+               usleep(1000 * 16);
+
+                //初始化 缓冲区
+              // int size = avCodecContext->width * avCodecContext->height;
+              /*  fwrite(avFrameYuv->data[0], 1, size, file);
                 fwrite(avFrameYuv->data[1], 1, size / 4, file);
-                fwrite(avFrameYuv->data[2], 1, size / 4, file);
+                fwrite(avFrameYuv->data[2], 1, size / 4, file);*/
+               // memcpy()
                 LOGI("帧数%d", ++frameNum);
             }
         }
         av_free_packet(avPacket);
     }
-    fclose(file);
+    ANativeWindow_release(aNativeWindow);
+   // fclose(file);
     (*env)->ReleaseStringUTFChars(env,jstr_input,input_c);
-    (*env)->ReleaseStringUTFChars(env,jstr_oupt,output_c);
+ //   (*env)->ReleaseStringUTFChars(env,jstr_oupt,output_c);
     av_frame_free(&avFrame);
     avcodec_close(avCodecContext);
     avformat_free_context(avFormatContext);
 }
 
+
+JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_createSurface
+        (JNIEnv * env, jclass jcls, jobject surface){
+    LOGI("%s","create_surface");
+    if(surface==NULL){
+        LOGE("%s","surface is null");
+        return;
+    }
+   ANativeWindow *aNativeWindow= ANativeWindow_fromSurface(env,surface);
+   /*if(nativeWindow==NULL){
+       LOGE("%s","nativeWindow is null");
+       return;
+   }
+   nativeWindow= (*env)->NewGlobalRef(env,aNativeWindow);*/
+}
+
+/*int32_t setBufferNativeWindow(int32_t with,int32_t height){
+    int32_t format=WINDOW_FORMAT_RGBA_8888;
+    if(nativeWindow==NULL){
+       LOGE("%s","aNativeWindow is null");
+    }
+    return ANativeWindow_setBuffersGeometry(nativeWindow,with,height,format);
+}*/
+
+JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_resumePlayer
+        (JNIEnv * env, jclass jcls){
+
+}
+JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_pausePlayer
+        (JNIEnv * env, jclass jcls){
+
+}
+JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_stopPlayer
+        (JNIEnv * env, jclass jcls){
+
+}
