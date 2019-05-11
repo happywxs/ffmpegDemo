@@ -81,7 +81,7 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
                                                    NULL);
     ANativeWindow* aNativeWindow= ANativeWindow_fromSurface(env,surfView);
  //   setBufferNativeWindow(avCodecContext->width,avCodecContext->height);
-    ANativeWindow_setBuffersGeometry(aNativeWindow,avCodecContext->width,avCodecContext->height,WINDOW_FORMAT_RGBA_8888);
+
     int got_picture, ret;
 
   //  FILE *file = fopen(output_c, "wb+");
@@ -96,7 +96,7 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
                 return;
             }
             if (got_picture) {
-
+                ANativeWindow_setBuffersGeometry(aNativeWindow,avCodecContext->width,avCodecContext->height,WINDOW_FORMAT_RGBA_8888);
             //   ANativeWindow_acquire(aNativeWindow);
                ANativeWindow_lock(aNativeWindow,&nativeWindow_buffer,NULL);
 
@@ -116,10 +116,15 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
                }
                ANativeWindow_unlockAndPost(aNativeWindow);
                usleep(1000 * 16);
-
                 //初始化 缓冲区
               // int size = avCodecContext->width * avCodecContext->height;
               /*  fwrite(avFrameYuv->data[0], 1, size, file);
+
+                sws_scale(swsContext, avFrame->data, avFrame->linesize, 0, avCodecContext->height,
+                          avFrameYuv->data, avFrameYuv->linesize);
+                int size = avCodecContext->width * avCodecContext->height;
+                LOGI("输出 %c",avFrameYuv->data[0]);
+                fwrite(avFrameYuv->data[0], 1, size, file);
                 fwrite(avFrameYuv->data[1], 1, size / 4, file);
                 fwrite(avFrameYuv->data[2], 1, size / 4, file);*/
                // memcpy()

@@ -33,10 +33,10 @@ public class VedioView extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        holder.setFormat(PixelFormat.RGBA_8888);
         String root = Environment.getExternalStorageDirectory().getAbsolutePath();
         String input = root + "/vedio.mp4";
         String out = root + "/vedio.yuv";
+        holder.setFormat(PixelFormat.RGBA_8888);//设置格式zz
         FPlayer.doOutput(input, holder.getSurface());
        // FPlayer.createSurface(holder.getSurface());
     }
@@ -54,7 +54,7 @@ public class VedioView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        getHolder().addCallback(VedioView.this);
+      //  getHolder().addCallback(VedioView.this);
     }
 
     public void start(){
