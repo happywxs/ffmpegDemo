@@ -26,7 +26,7 @@
  * Libswresample version macros
  */
 
-#include "libavutil/avutil.h"
+#include "ffmpeg/libavutil/avutil.h"
 
 #define LIBSWRESAMPLE_VERSION_MAJOR   1
 #define LIBSWRESAMPLE_VERSION_MINOR   1

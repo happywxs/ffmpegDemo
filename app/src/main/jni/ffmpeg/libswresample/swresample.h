@@ -121,10 +121,10 @@
  */
 
 #include <stdint.h>
-#include "libavutil/frame.h"
-#include "libavutil/samplefmt.h"
+#include "ffmpeg/libavutil/frame.h"
+#include "ffmpeg/libavutil/samplefmt.h"
 
-#include "libswresample/version.h"
+#include "ffmpeg/libswresample/version.h"
 
 #if LIBSWRESAMPLE_VERSION_MAJOR < 1
 #define SWR_CH_MAX 32   ///< Maximum number of channels
