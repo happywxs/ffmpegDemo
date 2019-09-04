@@ -3,10 +3,7 @@ package com.xue.song.ffmpeg;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.support.annotation.NonNull;
 import android.view.Surface;
-
-import static android.media.AudioTrack.WRITE_BLOCKING;
 
 public class FPlayer {
     static {
@@ -42,9 +39,7 @@ public class FPlayer {
         return audioTrack;
 
     }
-    public int write(@NonNull byte[] audioData, int offsetInBytes, int sizeInBytes) {
-        return 1;
-    }
+
     /**
      * 输入
      * 输出

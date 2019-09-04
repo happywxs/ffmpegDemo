@@ -90,14 +90,18 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
     int frameNum = 0;
     //一帧一帧读取压缩数据
     ANativeWindow_Buffer nativeWindow_buffer;
-    while (av_read_frame(avFormatContext, avPacket) == 0) {
+    while (av_read_frame(avFormatContext, avPacket) >= 0) {
+        if (frameNum == 1325) {
+            LOGI("%s", "log.....");
+        }
         if (avPacket->stream_index == v_stream_idx) {
             ret = avcodec_decode_video2(avCodecContext, avFrame, &got_picture, avPacket);
-            if (ret < 0) {
-                LOGE("%s", "decoder error" + ret);
-                return;
-            }
+
             if (got_picture) {
+                if (ret < 0) {
+                    LOGE("%s", "decoder error" + ret);
+                    break;
+                }
                 ANativeWindow_setBuffersGeometry(aNativeWindow, avCodecContext->width,
                                                  avCodecContext->height, WINDOW_FORMAT_RGBA_8888);
                 //   ANativeWindow_acquire(aNativeWindow);
@@ -114,7 +118,7 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
                 int i = 0;
 
                 for (; i < avCodecContext->height; i++) {
-                    LOGI("输出 %c", avFrame->data);
+                    // LOGI("输出 %c", avFrame->data);
                     memcpy(des + i * desStride, src + i * srcStride, srcStride);
                 }
                 ANativeWindow_unlockAndPost(aNativeWindow);
@@ -136,12 +140,16 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutput
         }
         av_free_packet(avPacket);
     }
+    LOGI("%s", "释放 aNativeWindow");
     ANativeWindow_release(aNativeWindow);
     // fclose(file);
     (*env)->ReleaseStringUTFChars(env, jstr_input, input_c);
     //   (*env)->ReleaseStringUTFChars(env,jstr_oupt,output_c);
+    LOGI("%s", "释放 avFrame");
     av_frame_free(&avFrame);
+    LOGI("%s", "释放 avFrame");
     avcodec_close(avCodecContext);
+    LOGI("%s", "释放 avFormatContext");
     avformat_free_context(avFormatContext);
 }
 
@@ -250,53 +258,57 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutputAudio
     enum AVSampleFormat in_ch_fmt = avCodecContext->sample_fmt;
     //输入采样率
     int in_simeple_rate = avCodecContext->sample_rate;
-     //声道数
-    int channel_num=av_get_channel_layout_nb_channels(out_ch_layout);
+    //声道数
+    int channel_num = av_get_channel_layout_nb_channels(out_ch_layout);
     //设置转换参数
     swr_alloc_set_opts(swrContext, out_ch_layout, out_ch_fmt, out_simple_rate, in_ch_layout,
                        in_ch_fmt, in_simeple_rate, 0, NULL);
     swr_init(swrContext);
 
     //从java层获取 AudioTrack 对象
-     //jmethodID  FPlayerMethonId=(*env)->GetMethodID(env,"<init>",jcls,"()Landroid/media/AudioTrack;");
-  //   jobject fplayer =(*env)->NewObject(env,jcls,FPlayerMethonId);
-     jmethodID audioPlayId=(*env)->GetStaticMethodID(env,jcls,"createAudioTraker","()Landroid/media/AudioTrack;");
-     jobject audioTrake= (*env)->CallStaticObjectMethod(env,jcls,audioPlayId);
-     jclass audioTrakeCls= (*env)->GetObjectClass(env,audioTrake);
-     jmethodID playMethId=(*env)->GetMethodID(env,jcls,"play","()V");
-     (*env)->CallVoidMethod(env,audioTrake,playMethId);
+    //jmethodID  FPlayerMethonId=(*env)->GetMethodID(env,"<init>",jcls,"()Landroid/media/AudioTrack;");
+    //   jobject fplayer =(*env)->NewObject(env,jcls,FPlayerMethonId);
+    jmethodID audioPlayId = (*env)->GetStaticMethodID(env, jcls, "createAudioTraker",
+                                                      "()Landroid/media/AudioTrack;");
+    jobject audioTrake = (*env)->CallStaticObjectMethod(env, jcls, audioPlayId);
+    jclass audioTrakeCls = (*env)->GetObjectClass(env, audioTrake);
+    jmethodID playMethId = (*env)->GetMethodID(env, audioTrakeCls, "play", "()V");
+    (*env)->CallVoidMethod(env, audioTrake, playMethId);
 
-     jmethodID  writeMethodId=(*env)->GetMethodID(env,jcls,"write","([BII)I");
+    jmethodID writeMethodId = (*env)->GetMethodID(env, audioTrakeCls, "write", "([BII)I");
 
 
-    int get_frame_ptr,ret;
-    int frame=0;
-    while (av_read_frame(avFormatContext,avPacket)==0){
-          if (avPacket->stream_index==audioIndex){
-                ret=avcodec_decode_audio4(avCodecContext,avFrame,&get_frame_ptr,avPacket);
-                if(ret<0){
-                    LOGI("%s","decode audio is error");
+    int get_frame_ptr, ret;
+    int frame = 0;
+    while (av_read_frame(avFormatContext, avPacket) >= 0) {
+        if (avPacket->stream_index == audioIndex) {
+            ret = avcodec_decode_audio4(avCodecContext, avFrame, &get_frame_ptr, avPacket);
+
+            LOGI("帧数 %d", ++frame);
+            if (get_frame_ptr) {
+                if (ret < 0) {
+                    LOGI("%s", "decode audio is error");
                     return;
                 }
-               LOGI("帧数 %d",++frame);
-                if(get_frame_ptr){
-                    swr_convert(swrContext,&buffer,MAX_AUDIO_FRME_SIZE,avFrame->data,avFrame->nb_samples);
-                    int buffer_size=av_samples_get_buffer_size(NULL,channel_num,avFrame->nb_samples,out_ch_fmt,NULL);
-                    jbyteArray jbuffer=(*env)->NewByteArray(env,buffer_size);
-                    jbyte* jbyte=(*env)->GetByteArrayElements(env,jbuffer,NULL);
-                    memcpy(jbyte,buffer,buffer_size);
-                    (*env)->CallIntMethod(env,audioTrake,writeMethodId,jbuffer,0,buffer_size);
-                    sleep(1000*16);
-                    (*env)->ReleaseByteArrayElements(env,jbuffer,jbyte,0);
-                    (*env)->DeleteLocalRef(env,jbuffer);
-                }
-              (*env)->ReleaseStringChars(env,input,input_c);
+                swr_convert(swrContext, &buffer, MAX_AUDIO_FRME_SIZE, avFrame->data,
+                            avFrame->nb_samples);
+                int buffer_size = av_samples_get_buffer_size(NULL, channel_num, avFrame->nb_samples,
+                                                             out_ch_fmt, NULL);
+                jbyteArray jbuffer = (*env)->NewByteArray(env, buffer_size);
+                jbyte *jbyte = (*env)->GetByteArrayElements(env, jbuffer, NULL);
+                memcpy(jbyte, buffer, buffer_size);
+                (*env)->ReleaseByteArrayElements(env, jbuffer, jbyte, 0);
+                (*env)->CallIntMethod(env, audioTrake, writeMethodId, jbuffer, 0, buffer_size);
+                usleep(1000 * 16);
+                (*env)->DeleteLocalRef(env, jbuffer);
+            }
 
-          }
+        }
         av_free_packet(avPacket);
     }
-   swr_free(&swrContext);
-   av_frame_free(&avFrame);
-   avcodec_free_context(&avCodecContext);
-   avformat_free_context(avFormatContext);
+    (*env)->ReleaseStringChars(env, input, input_c);
+    swr_free(&swrContext);
+    av_frame_free(&avFrame);
+    avcodec_free_context(&avCodecContext);
+    avformat_free_context(avFormatContext);
 }
