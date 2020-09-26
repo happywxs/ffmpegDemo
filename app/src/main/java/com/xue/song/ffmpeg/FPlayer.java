@@ -65,4 +65,6 @@ public class FPlayer {
     public static native void pausePlayer();
 
     public static native void stopPlayer();
+
+    public static native void  mixAudio(String[] audioPath,int len);
 }

@@ -26,6 +26,11 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_pausePlayer
         (JNIEnv *, jclass);
 JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_stopPlayer
         (JNIEnv *, jclass);
+
+JNIEXPORT void JNICALL
+Java_com_xue_song_ffmpeg_FPlayer_mixAudio(JNIEnv *env, jclass type, jobjectArray audioPath,
+                                          jint len);
+
 #ifdef __cplusplus
 }
 #endif

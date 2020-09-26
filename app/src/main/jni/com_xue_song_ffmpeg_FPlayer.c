@@ -10,6 +10,7 @@
 #include <android/native_window_jni.h>
 #include <unistd.h>
 #include <ffmpeg/libswresample/swresample.h>
+#include <filtering_audio.h>
 /* Header for class com_xue_song_ffmpeg_FPlayer */
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,"wang",__VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,"wang",__VA_ARGS__)
@@ -311,4 +312,21 @@ JNIEXPORT void JNICALL Java_com_xue_song_ffmpeg_FPlayer_doOutputAudio
     av_frame_free(&avFrame);
     avcodec_free_context(&avCodecContext);
     avformat_free_context(avFormatContext);
+}
+
+JNIEXPORT void JNICALL
+Java_com_xue_song_ffmpeg_FPlayer_mixAudio(JNIEnv *env, jclass type, jobjectArray audioPath,
+                                          jint len) {
+    int size = (*env)->GetArrayLength(env, audioPath);
+    char **args = malloc(size * sizeof(char *));
+    int i = 0;
+    for (; i < size; i++) {
+        LOGI("=======GetObjectArrayElement=====");
+        jstring region = (*env)->GetObjectArrayElement(env, audioPath, i);
+        LOGI("=======GetObjectArrayElement=====end");
+        args[i] = (char *) (*env)->GetStringUTFChars(env, region, 0);
+        LOGI("=======GetStringUTFChars=====%s",args[i]);
+    }
+    mixAudio(size, args);
+
 }
