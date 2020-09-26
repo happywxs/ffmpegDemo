@@ -27,7 +27,6 @@
  * Libavfilter version macros
  */
 
-#include "libavutil/version.h"
 
 #define LIBAVFILTER_VERSION_MAJOR  5
 #define LIBAVFILTER_VERSION_MINOR  11

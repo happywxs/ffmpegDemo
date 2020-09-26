@@ -35,16 +35,16 @@
 
 #include <stddef.h>
 
-#include "libavutil/attributes.h"
-#include "libavutil/avutil.h"
-#include "libavutil/dict.h"
-#include "libavutil/frame.h"
-#include "libavutil/log.h"
-#include "libavutil/samplefmt.h"
-#include "libavutil/pixfmt.h"
-#include "libavutil/rational.h"
+#include "ffmpeg/libavutil/attributes.h"
+#include "ffmpeg/libavutil/avutil.h"
+#include "ffmpeg/libavutil/dict.h"
+#include "ffmpeg/libavutil/frame.h"
+#include "ffmpeg/libavutil/log.h"
+#include "ffmpeg/libavutil/samplefmt.h"
+#include "ffmpeg/libavutil/pixfmt.h"
+#include "ffmpeg/libavutil/rational.h"
 
-#include "libavfilter/version.h"
+#include "ffmpeg/libavfilter/version.h"
 
 /**
  * Return the LIBAVFILTER_VERSION_INT constant.
